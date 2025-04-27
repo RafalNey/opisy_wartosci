@@ -1,8 +1,6 @@
 import os
 import openai
-# import PyPDF2
 import pypandoc
-# import shutil
 from dotenv import load_dotenv
 
 # Załaduj zmienne środowiskowe z pliku .env
@@ -14,6 +12,10 @@ RAW_DIR = 'raw'
 WARTOSCI_OPISY_DIR = 'wartosci-opisy'
 WARTOSCI_DONE_DIR = 'wartosci-done'
 
+# Upewnij się, że katalog docelowy istnieje
+os.makedirs(WARTOSCI_DONE_DIR, exist_ok=True)
+
+# Lista wartości
 lista_wartosci = '''
 1. Osiągnięcia (achievement)
 2. Hedonizm (hedonism)
@@ -56,7 +58,8 @@ def ask(query):
 def process_files(matching_files, prompt_template):
     results = {}
     for name, file in matching_files:
-        file_text = convert_odt_to_text(file)
+        with open(file, 'r', encoding='utf-8') as f:
+            file_text = f.read()
         query = f"{prompt_template}\n\n{file_text}"
         processed_text = ask(query)
         results[name] = processed_text
@@ -75,10 +78,9 @@ prompt_template = (
 matching_files = [(f, os.path.join(RAW_DIR, f)) for f in os.listdir(RAW_DIR) if f.endswith('.txt')]
 processed_results = process_files(matching_files, prompt_template)
 
-# Zapisz przetworzone teksty w formacie .txt
 for name, processed_text in processed_results.items():
     base_name = os.path.splitext(name)[0]
-    output_file_name = f"{base_name}_stopni.txt"
+    output_file_name = f"{base_name}.txt"
     output_path = os.path.join(WARTOSCI_DONE_DIR, output_file_name)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(processed_text)
